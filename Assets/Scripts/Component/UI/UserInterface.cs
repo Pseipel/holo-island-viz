@@ -1,8 +1,9 @@
 ﻿using HoloIslandVis.Utility;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.UI;
 
 namespace HoloIslandVis.Component.UI
 {
@@ -26,11 +27,17 @@ namespace HoloIslandVis.Component.UI
             ScanInstructionText = GameObject.Find("ScanInstructionText");
             ScanProgressBar = GameObject.Find("ScanProgressBar");
             Panel = GameObject.Find("Panel");
+      
 
             ScanInstructionText.SetActive(false);
             ScanProgressBar.SetActive(false);
             Panel.SetActive(false);
 
+        }
+
+        private void Testmethod()
+        {
+            Debug.Log("Button pressed");
         }
     }
 }

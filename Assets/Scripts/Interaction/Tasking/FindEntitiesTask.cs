@@ -38,34 +38,34 @@ public class FindEntitiesTask : DiscreteInteractionTask
         FoundObject = null;
         SpeechInputEventArgs siea = (SpeechInputEventArgs) eventArgs;
 
-        Entity type;
-        Entity unitName;
+        //Entity type;
+        //Entity unitName;
 
-        type = siea.entities.Find(entity => entity.EntityType.Equals("entity_type"));
-        unitName = siea.entities.Find(entity => entity.EntityType.Equals("unit_name"));
+        //type = siea.entities.Find(entity => entity.EntityType.Equals("entity_type"));
+        //unitName = siea.entities.Find(entity => entity.EntityType.Equals("unit_name"));
 
-        if (type != null && unitName != null)
-        {
-            switch (type.EntityValue)
-            {
-                case "building":
-                    findBuilding(unitName.EntityValue);
-                    break;
-                case "island":
-                    findIsland(unitName.EntityValue);
-                    break;
-                case "region":
-                    findRegion(unitName.EntityValue);
-                    break;
-                default:
-                    Debug.Log("No known Type detected");
-                    break;
-            }
-        }
-        else
-        {
-            Debug.Log("couldnt parse your utterance");
-        }
+        //if (type != null && unitName != null)
+        //{
+        //    switch (type.EntityValue)
+        //    {
+        //        case "building":
+        //            findBuilding(unitName.EntityValue);
+        //            break;
+        //        case "island":
+        //            findIsland(unitName.EntityValue);
+        //            break;
+        //        case "region":
+        //            findRegion(unitName.EntityValue);
+        //            break;
+        //        default:
+        //            Debug.Log("No known Type detected");
+        //            break;
+        //    }
+        //}
+        //else
+        //{
+        //    Debug.Log("couldnt parse your utterance");
+        //}
 
     }
 

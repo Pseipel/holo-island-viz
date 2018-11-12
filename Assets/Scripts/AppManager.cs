@@ -8,11 +8,12 @@ using HoloIslandVis.OSGiParser;
 using HoloIslandVis.Utility;
 using HoloIslandVis.Visualization;
 using HoloToolkit.Unity.InputModule;
-using HoloToolkit.UX.ToolTips;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
@@ -217,12 +218,19 @@ namespace HoloIslandVis
             Command commandSurfaceDrag = new Command(GestureType.OneHandManipStart, KeywordType.Invariant, InteractableType.Invariant);
             Command commandSurfaceZoom = new Command(GestureType.TwoHandManipStart, KeywordType.Invariant, InteractableType.Invariant);
 
+            Command commandVerbalReply = new Command(GestureType.Invariant, KeywordType.Utter, InteractableType.Invariant);
+            Command commandDisplayOnPanel = new Command(GestureType.Invariant, KeywordType.Find, InteractableType.Invariant);
+            Command commandNavigateToTarget = new Command(GestureType.OneHandTap, KeywordType.Invariant, InteractableType.Panel);
+
             ShowArrowTask showArrowTask = new ShowArrowTask();
 
             IslandSelectTask islandSelectTask = new IslandSelectTask();
             IslandDeselectTask islandDeselectTask = new IslandDeselectTask();
             SurfaceDragTask surfaceDragTask = new SurfaceDragTask();
             SurfaceZoomTask surfaceZoomTask = new SurfaceZoomTask();
+            VerbalReplyTask verbalReplyTask = new VerbalReplyTask();
+            DisplayOnPanelTask displayOnPanelTask = new DisplayOnPanelTask();
+            FindEntitiesTask findEntitiesTask = new FindEntitiesTask();
 
             testState.AddInteractionTask(commandImportDockSelect, showArrowTask);
             testState.AddInteractionTask(commandExportDockSelect, showArrowTask);
@@ -231,6 +239,10 @@ namespace HoloIslandVis
             testState.AddInteractionTask(commandDeselect, islandDeselectTask);
             testState.AddInteractionTask(commandSurfaceDrag, surfaceDragTask);
             testState.AddInteractionTask(commandSurfaceZoom, surfaceZoomTask);
+            testState.AddInteractionTask(commandVerbalReply, verbalReplyTask);
+            testState.AddInteractionTask(commandDisplayOnPanel, displayOnPanelTask);
+            testState.AddInteractionTask(commandNavigateToTarget, findEntitiesTask);
+
 
             stateMachine.AddState(testState);
             stateMachine.Init(testState);

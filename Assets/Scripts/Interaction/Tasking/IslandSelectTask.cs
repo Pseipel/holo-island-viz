@@ -21,8 +21,6 @@ public class IslandSelectTask : DiscreteInteractionTask
 
         GameObject currentFocus = RuntimeCache.Instance.CurrentFocus;
         GameObject infoPanel = UserInterface.Instance.Panel;
-        RuntimeCache cache = RuntimeCache.Instance;
-        //Debug.Log(currentFocus.name + "/Highlight");
         Island island = currentFocus.GetComponent<Island>();
         Transform[] transforms = currentFocus.transform.GetComponentsInChildren<Transform>(true);
         foreach(Transform trans in transforms)

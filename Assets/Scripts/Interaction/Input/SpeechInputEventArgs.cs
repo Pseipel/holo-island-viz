@@ -9,14 +9,20 @@ namespace HoloIslandVis.Interaction.Input
 {
     public class SpeechInputEventArgs : InputEventArgs
     {
-        public List<Entity> entities;
-        public string intention;
-        public double intentionConfidence;
-        public SpeechInputEventArgs(RasaResponse response)
+ 
+        public string rasaResponse;
+        public string keyWord;
+
+
+        //public List<Entity> entities;
+        //public double intentionConfidence;
+
+        public SpeechInputEventArgs(string rasaResponse, string keyWord)
         {   
-            this.entities = response.Entities;
-            this.intention = response.IntentName;
-            this.intentionConfidence = response.IntentConfidence;
+            this.rasaResponse = rasaResponse;
+            this.keyWord = keyWord;
+            //this.entities = response.Entities;
+            //this.intentionConfidence = response.IntentConfidence;
         }
     }
 }

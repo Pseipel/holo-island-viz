@@ -13,6 +13,8 @@ using UnityEngine.Networking;
 using System.Threading.Tasks;
 using HoloIslandVis.Automaton;
 using UnityEngine.Events;
+using System.Text;
+using System.IO;
 
 namespace HoloIslandVis.Interaction.Input
 {
@@ -26,6 +28,8 @@ namespace HoloIslandVis.Interaction.Input
         private DictationRecognizer m_DictationRecognizer;
         private TextToSpeech tts;
         private bool listening = false;
+        string currentRasaResponse;
+        string currentKeyWord;
 
         protected override void Awake()
         {
@@ -48,6 +52,7 @@ namespace HoloIslandVis.Interaction.Input
                     if (text.Equals("hello") || text.Equals("test") || text.Equals("wilson") || text.Equals("island voice"))
                     {
                         listening = true;
+                        Debug.Log("I am listening");
                         tts.StartSpeaking("I am listening");
                     }
                     else
@@ -55,12 +60,16 @@ namespace HoloIslandVis.Interaction.Input
                     {
                         int i = text.IndexOf(" ") + 1;
                         string str = text.Substring(i);
-                        StartCoroutine(GetAPIResponse(str));
+                        GetAPIResponse(str);
+                        SpeechInputEventArgs eventArgs = new SpeechInputEventArgs(currentRasaResponse, currentKeyWord);
+                        UnityMainThreadDispatcher.Instance.Enqueue(response => SpeechResponse(response), eventArgs);
                     }
                 }
                 else
                 {
-                    StartCoroutine(GetAPIResponse(text));
+                    GetAPIResponse(text);
+                    SpeechInputEventArgs eventArgs = new SpeechInputEventArgs(currentRasaResponse, currentKeyWord);
+                    UnityMainThreadDispatcher.Instance.Enqueue(response => SpeechResponse(response), eventArgs);
                     listening = false;
                 }
             };
@@ -75,30 +84,44 @@ namespace HoloIslandVis.Interaction.Input
 
         }
 
-        IEnumerator GetAPIResponse(string voiceCommand)
+        private void GetAPIResponse(string voiceCommand)
         {
-            Dictionary<string, string> headers = new Dictionary<string, string>
-            {
-                { "Content-Type", "application/json" }
-            };
+            WebRequest request = WebRequest.Create(
+            baseURL + "webhooks/rest/webhook");
+            request.ContentType = "application/json";
+            request.Method = "POST";
+            string postData = "{\"sender\":\"default\",\"message\":\"" + voiceCommand + "\"}";
+            byte[] byteArray = Encoding.UTF8.GetBytes(postData);
+            request.ContentLength = byteArray.Length;
+            Stream dataStream = request.GetRequestStream();
+            dataStream.Write(byteArray, 0, byteArray.Length);
+            dataStream.Close();
+            WebResponse response = request.GetResponse();
 
-            using (WWW www = new WWW(
-                baseURL + "conversations/default/parse",
-                System.Text.Encoding.UTF8.GetBytes("{\"query\" : \"" + voiceCommand + "\"}"),
-                headers))
+            //TODO: checked Status 
+            //Debug.Log(((HttpWebResponse)response).StatusDescription);
+
+            dataStream = response.GetResponseStream();
+            StreamReader reader = new StreamReader(dataStream);
+            string responseFromServer = reader.ReadToEnd();
+            Debug.Log(responseFromServer);
+            string textResponse = responseFromServer;
+            reader.Close();
+            dataStream.Close();
+            response.Close();
+
+            JSONObject jobj = JSONObject.Create(textResponse);
+
+            currentRasaResponse = jobj[0].GetField("text").ToString();
+            if (currentRasaResponse.ToLower().StartsWith("match") && currentRasaResponse.ToLower().EndsWith(";"))
             {
-                yield return www;
-                if (!string.IsNullOrEmpty(www.error))
-                {
-                    tts.StartSpeaking("somethings wrong with the API.");
-                }
-                else
-                {
-                    RasaResponse response = new RasaResponse(www.text);
-                    Debug.Log("www.text: " + www.text);
-                    SpeechInputEventArgs eventArgs = new SpeechInputEventArgs(response);
-                    UnityMainThreadDispatcher.Instance.Enqueue(intentName => SpeechResponse(intentName), eventArgs);
-                }
+                //TODO: prototyping
+                currentRasaResponse = "MATCH (n:Units) RETURN n LIMIT 5";
+                currentKeyWord = "find";
+            }
+            else
+            {
+                currentKeyWord = "utter";
             }
         }
 

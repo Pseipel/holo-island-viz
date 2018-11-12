@@ -121,16 +121,14 @@ namespace HoloIslandVis.Automaton
         public override void OnSpeechResponse(SpeechInputEventArgs eventArgs)
         {
             KeywordType kt; 
-            switch(eventArgs.intention)
+            switch(eventArgs.keyWord)
             {
-                case "find_entity_by_name_or_id":
+                //TODO: refactoring 
+                case "find":
                     kt = KeywordType.Find;
                     break;
-                case "show_entity":
-                    kt = KeywordType.Show;
-                    break;
-                case "hide_entity":
-                    kt = KeywordType.Hide;
+                case "utter":
+                    kt = KeywordType.Utter;
                     break;
                 default:
                     kt = KeywordType.Invariant;

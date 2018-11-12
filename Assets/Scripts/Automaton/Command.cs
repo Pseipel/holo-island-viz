@@ -18,8 +18,9 @@ namespace HoloIslandVis.Automaton
     {
         Invariant = 0,
         Find = 1,
-        Show = 2,
-        Hide = 4
+        Utter = 2,
+        //ShowInfo = 4
+        //,Hide = 8
     }
 
     public enum InteractableType
@@ -28,7 +29,8 @@ namespace HoloIslandVis.Automaton
         Island = 1,
         ExportDock = 2,
         ImportDock = 4,
-        Invariant = 8
+        Invariant = 8,
+        Panel = 16
     }
 
     public struct Command

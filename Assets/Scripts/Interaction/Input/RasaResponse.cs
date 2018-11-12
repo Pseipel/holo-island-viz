@@ -5,55 +5,60 @@ namespace HoloIslandVis.Interaction.Input
     public class RasaResponse
     {
 
-        public RasaResponse(string apiRequest)
-        {
-            JSONObject jobj = JSONObject.Create(apiRequest);
+        //public RasaResponse(string apiRequest)
+        //{
+        //    JSONObject jobj = JSONObject.Create(apiRequest);
 
-            IntentConfidence = jobj.GetField("tracker").GetField("latest_message").GetField("intent").GetField("confidence").n;
-            IntentName = jobj.GetField("tracker").GetField("latest_message").GetField("intent").GetField("name").str;
-            JSONObject arr = jobj.GetField("tracker").GetField("latest_message").GetField("entities");
-            Entities = new List<Entity>();
-            foreach (JSONObject element in arr)
-            {
-                Entities.Add(new Entity(element));
-            }
-        }
+        //    if (jobj.IsArray)
+        //    {
+        //        ActionName = jobj[0].GetField("text").ToString();
+        //        ActionParameter = jobj[1].GetField("text").ToString();
+        //    }
+        //    jobj[1].GetField("text");
+        //}
 
-        public double IntentConfidence
-        {
-            get; private set;
-        }
 
-        public string IntentName
-        {
-            get; private set;
-        }
+        //public string ActionParameter
+        //{
+        //    get; private set;
+        //}
 
-        public List<Entity> Entities;
+        ////TODO: use confidence for evaluation
+        ////    public double IntentConfidence
+        ////    {
+        ////        get; private set;
+        ////    }
 
-        public class Entity
-        {
+        //public string ActionName
+        //{
+        //    get; private set;
+        //}
 
-            public Entity(JSONObject element)
-            {
-                Confidence = element.GetField("confidence").n;
-                EntityType = element.GetField("entity").str;
-                EntityValue = element.GetField("value").str;
-            }
+        //    public List<Entity> Entities;
 
-            public float Confidence
-            {
-                get; private set;
-            }
-            public string EntityType
-            {
-                get; private set;
-            }
-            public string EntityValue
-            {
-                get; private set;
-            }
-        }
+        //    public class Entity
+        //    {
+
+        //        public Entity(JSONObject element)
+        //        {
+        //            Confidence = element.GetField("confidence").n;
+        //            EntityType = element.GetField("entity").str;
+        //            EntityValue = element.GetField("value").str;
+        //        }
+
+        //        public float Confidence
+        //        {
+        //            get; private set;
+        //        }
+        //        public string EntityType
+        //        {
+        //            get; private set;
+        //        }
+        //        public string EntityValue
+        //        {
+        //            get; private set;
+        //        }
+        //    }
 
     }
 
