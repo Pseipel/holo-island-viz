@@ -112,11 +112,11 @@ namespace HoloIslandVis.Interaction.Input
 
             JSONObject jobj = JSONObject.Create(textResponse);
 
-            currentRasaResponse = jobj[0].GetField("text").ToString();
-            if (currentRasaResponse.ToLower().StartsWith("match") && currentRasaResponse.ToLower().EndsWith(";"))
+            currentRasaResponse = jobj[0].GetField("text").ToString().Replace("\"", "");
+            if (currentRasaResponse.ToLower().StartsWith("match"))
             {
                 //TODO: prototyping
-                currentRasaResponse = "MATCH (n:Units) RETURN n LIMIT 5";
+                //currentRasaResponse = "MATCH (n:Units) RETURN n LIMIT 5";
                 currentKeyWord = "find";
             }
             else

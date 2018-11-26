@@ -11,8 +11,8 @@ namespace HoloIslandVis.Utility
     {
         public Neo4JResponse(JSONObject dbEntry)
         {
-            this.ID = dbEntry.GetField("meta")[0].GetField("id").ToString();
-            this.Description = dbEntry.GetField("row")[0].ToString();
+            this.Description = dbEntry.GetField("columns").ToString();
+            this.Description = dbEntry.GetField("row").ToString();
         }
 
         public string ID
