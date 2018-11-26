@@ -4,15 +4,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace HoloIslandVis.Interaction.Input
+namespace HoloIslandVis.Input
 {
     public class GestureInputEventArgs : InputEventArgs
     {
+        public bool IsRemoteInput;
+        public GestureType GestureType;
+        public GameObject Target;
         public List<uint> SourceIds;
         public Dictionary<uint, Vector3> SourcePositions;
 
-        public GestureInputEventArgs(GestureSource[] gestureSources)
+        public GestureInputEventArgs(GestureType gestureType, GestureSource[] gestureSources)
         {
+            IsRemoteInput = false;
+            GestureType = gestureType;
             SourceIds = new List<uint>();
             SourcePositions = new Dictionary<uint, Vector3>();
 
@@ -26,6 +31,14 @@ namespace HoloIslandVis.Interaction.Input
                 if (source.InputSource.TryGetGripPosition(sourceId, out sourcePosition))
                     SourcePositions.Add(source.SourceId, sourcePosition);
             }
+        }
+
+        public GestureInputEventArgs(GestureType gestureType, List<uint> sourceIds, Dictionary<uint, Vector3> sourcePositions)
+        {
+            IsRemoteInput = false;
+            GestureType = gestureType;
+            SourceIds = sourceIds;
+            SourcePositions = sourcePositions;
         }
 
         public bool TryGetSingleGripPosition(out Vector3 sourceOnePos)

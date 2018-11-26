@@ -1,4 +1,5 @@
-﻿using HoloIslandVis.OSGiParser;
+﻿using HoloIslandVis.Component.UI;
+using HoloIslandVis.OSGiParser;
 using HoloIslandVis.OSGiParser.Graph;
 using HoloIslandVis.Utility;
 using System.Collections;
@@ -13,14 +14,29 @@ using TNetMesh = TriangleNet.Mesh;
 using TNetHalfEdge = TriangleNet.Topology.DCEL.HalfEdge;
 using System;
 using TriangleNet;
+using System.Linq;
 
 namespace HoloIslandVis.Visualization
 {
     internal class IslandGameObjectBuilder
     {
+        public delegate void ConstructionCompletedHandler();
+        public event ConstructionCompletedHandler ConstructionCompleted = delegate { };
 
         // TODO: Refactor.
         public const float ISLAND_ABOVE_OCEAN = 3.0f;
+
+        private bool _constructionComplete;
+        private List<Island> _islands;
+
+        public bool ConstructionComplete {
+            get { return _constructionComplete; }
+            private set {
+                _constructionComplete = value;
+                if (value)
+                    ConstructionCompleted();
+            }
+        }
 
         private static IslandGameObjectBuilder _instance;
         public static IslandGameObjectBuilder Instance {
@@ -36,10 +52,26 @@ namespace HoloIslandVis.Visualization
 
         private IslandGameObjectBuilder()
         {
-
+            _islands = new List<Island>();
         }
 
-        public GameObject BuildFromIslandStructure(CartographicIsland islandStructure)
+        public void BuildFromIslandStructures(List<CartographicIsland> _islandStructures)
+        {
+            foreach (CartographicIsland islandStructure in _islandStructures)
+            {
+                if (islandStructure.DependencyVertex != null)
+                {
+                    GameObject islandGameObject = buildFromIslandStructure(islandStructure);
+                    _islands.Add(islandGameObject.GetComponent<Island>());
+                }
+            }
+
+            RuntimeCache.Instance.Islands = _islands;
+            UserInterface.Instance.ParsingProgressText.GetComponent<TextMesh>().text = "Done building island game objects.";
+            ConstructionComplete = true;
+        }
+
+        private GameObject buildFromIslandStructure(CartographicIsland islandStructure)
         {
             // TODO: Refactor.
             int randomSeed = islandStructure.Name.GetHashCode() + 200;
@@ -47,8 +79,10 @@ namespace HoloIslandVis.Visualization
 
             GameObject islandGameObject = new GameObject(islandStructure.Name);
             Island islandComponent = islandGameObject.AddComponent<Island>();
+            islandGameObject.transform.parent = RuntimeCache.Instance.VisualizationContainer.transform;
             islandComponent.CartographicIsland = islandStructure;
             islandStructure.IslandGameObject = islandGameObject;
+            islandGameObject.tag = "Island";
 
             //islandGameObject.AddComponent<Highlightable>();
 
@@ -68,6 +102,7 @@ namespace HoloIslandVis.Visualization
                 islandComponent.Regions.Add(regionComponent);
 
                 GameObject regionArea = new GameObject("Region area");
+                regionArea.transform.rotation *= Quaternion.Euler(-90, 0, 0);
                 regionArea.transform.SetParent(region.transform);
                 MeshFilter meshFilter = regionArea.AddComponent<MeshFilter>();
                 MeshRenderer meshRenderer = regionArea.AddComponent<MeshRenderer>();
@@ -104,10 +139,10 @@ namespace HoloIslandVis.Visualization
 
                     // TODO: Refactor?
                     // TODO: Switch axis!
-                    float xPos = (float) packageCells[j].generator.X;
-                    float yPos = (float) packageCells[j].generator.Y;
-                    float zPos = (float) packageCells[j].generator.Z;
-                    building.transform.position = new Vector3(xPos, zPos, yPos);
+                    float xPos = (float) packageCells[j].Generator.X;
+                    float yPos = (float) packageCells[j].Generator.Y;
+                    float zPos = (float) packageCells[j].Generator.Z;
+                    building.transform.position = new Vector3(xPos, zPos, -yPos);
                     Vector3 randomRotation = new Vector3(0f, UnityEngine.Random.Range(-180, 180), 0f);
                     building.transform.localEulerAngles = randomRotation;
                     float scale = IslandStructureBuilder.CELL_SCALE_FACTOR * 0.0075f;
@@ -124,33 +159,33 @@ namespace HoloIslandVis.Visualization
             }
 
             GameObject coastline = buildIslandCoastline(islandStructure);
+            coastline.transform.rotation *= Quaternion.Euler(-90, 0, 0);
             coastline.transform.parent = islandGameObject.transform;
             islandComponent.Coast = coastline;
 
             GameObject importDock = buildDock(islandStructure, DockType.Import);
-            importDock.transform.parent = islandGameObject.transform;
             islandComponent.ImportDock = importDock;
 
             GameObject exportDock = buildDock(islandStructure, DockType.Export);
-            exportDock.transform.parent = islandGameObject.transform;
             islandComponent.ExportDock = exportDock;
 
             // TODO: Refactor.
-
             float[] heightProfile = IslandStructureBuilder.HEIGHT_PROFILE;
             Vector3 position = islandStructure.DependencyVertex.Position;
-            Vector3 containerPosition = RuntimeCache.Instance.VisualizationContainer.transform.position;
-            position.y = containerPosition.y - heightProfile[heightProfile.Length - 1];
-            islandGameObject.transform.position = position;
-            islandGameObject.transform.parent = RuntimeCache.Instance.VisualizationContainer.transform;
+            //Vector3 containerPosition = RuntimeCache.Instance.VisualizationContainer.transform.position;
+            //position.y = containerPosition.y - heightProfile[heightProfile.Length - 1];
+            //islandGameObject.transform.position = position;
+            //islandGameObject.transform.localRotation *= RuntimeCache.Instance.ContentSurface.transform.rotation;
 
-            Vector3 localIslandPos = islandGameObject.transform.localPosition;
-            localIslandPos.y = Mathf.Abs(heightProfile[heightProfile.Length - 1]) * ISLAND_ABOVE_OCEAN;
-            islandGameObject.transform.localPosition = localIslandPos;
+            //Vector3 localIslandPos = islandGameObject.transform.localPosition;
+            position.y = Mathf.Abs(heightProfile[heightProfile.Length - 1]) * ISLAND_ABOVE_OCEAN;
+            islandGameObject.transform.localRotation *= RuntimeCache.Instance.ContentSurface.transform.rotation;
+            islandGameObject.transform.localPosition = position;
 
             addRegionColliders(islandComponent.Regions);
             addIslandCollider(islandComponent);
 
+            islandGameObject.transform.localScale = Vector3.one;
             return islandGameObject;
         }
 
@@ -205,14 +240,17 @@ namespace HoloIslandVis.Visualization
 
         private GameObject buildDock(CartographicIsland islandStructure, DockType dockType)
         {
+            GameObject dock = GameObject.Instantiate(RuntimeCache.Instance.DockPrefabs[dockType], Vector3.zero, Quaternion.identity);
+            dock.transform.parent = islandStructure.IslandGameObject.transform;
+
             float[] heightProfile = IslandStructureBuilder.HEIGHT_PROFILE;
             Vector3 dockDirection = new Vector3(UnityEngine.Random.value, 0, UnityEngine.Random.value);
             dockDirection.Normalize();
             dockDirection *= islandStructure.getRadius();
             Vector3 dockPos = islandStructure.getWeightedCenter() + dockDirection;
-            dockPos.y -= Mathf.Abs(heightProfile[heightProfile.Length - 1]) * ISLAND_ABOVE_OCEAN - 0.2f;
+            dockPos.y -= 2.0f;
 
-            GameObject dock = GameObject.Instantiate(RuntimeCache.Instance.DockPrefabs[dockType], dockPos, Quaternion.identity);
+            dock.transform.localPosition = dockPos;
             dock.name = islandStructure.Name + " " + Enum.GetName(typeof(DockType), dockType);
             dock.transform.localScale = Vector3.one;
 
@@ -260,7 +298,7 @@ namespace HoloIslandVis.Visualization
                     bool found = false;
                     for (int k = 0; k < outVertices.Count; k++)
                     {
-                        if ((outVertices[k].x == t.GetVertex(j).x) && (outVertices[k].z == t.GetVertex(j).y) && (outVertices[k].y == t.GetVertex(j).z))
+                        if ((outVertices[k].x == t.GetVertex(j).X) && (outVertices[k].z == t.GetVertex(j).Y) && (outVertices[k].y == t.GetVertex(j).Z))
                         {
                             outIndices.Add(k);
                             found = true;
@@ -270,7 +308,7 @@ namespace HoloIslandVis.Visualization
 
                     if (!found)
                     {
-                        outVertices.Add(new Vector3((float)t.GetVertex(j).x, (float)t.GetVertex(j).z, (float)t.GetVertex(j).y));
+                        outVertices.Add(new Vector3((float)t.GetVertex(j).X, (float)t.GetVertex(j).Y, (float)t.GetVertex(j).Z));
                         outIndices.Add(outVertices.Count - 1);
                     }
                 }
@@ -281,11 +319,11 @@ namespace HoloIslandVis.Visualization
 
             UnityEngine.Mesh resultMesh = new UnityEngine.Mesh();
             resultMesh.SetVertices(outVertices);
+            outIndices.Reverse();
             resultMesh.SetTriangles(outIndices, 0);
             resultMesh.SetUVs(0, uvs);
             resultMesh.RecalculateBounds();
             resultMesh.RecalculateNormals();
-
             return resultMesh;
         }
 

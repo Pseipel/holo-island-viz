@@ -1,4 +1,5 @@
 ﻿using HoloIslandVis.OSGiParser.Graph;
+using HoloIslandVis.Utility;
 using HoloIslandVis.Visualization;
 using QuickGraph;
 using System.Collections;
@@ -8,6 +9,20 @@ using UnityEngine;
 
 public class IslandDockBuilder
 {
+    public delegate void ConstructionCompletedHandler();
+    public event ConstructionCompletedHandler ConstructionCompleted = delegate { };
+
+    private bool _constructionComplete;
+
+    public bool ConstructionComplete {
+        get { return _constructionComplete; }
+        private set {
+            _constructionComplete = value;
+            if (value)
+                ConstructionCompleted();
+        }
+    }
+
     private static IslandDockBuilder _instance;
     public static IslandDockBuilder Instance
     {
@@ -21,7 +36,70 @@ public class IslandDockBuilder
         private set { }
     }
 
-    public void BuildDockForIsland(Island island)
+    public void BuildDocksForIslands(List<Island> islands)
+    {
+        List<GameObject> docks = new List<GameObject>();
+        RuntimeCache.Instance.Docks = docks;
+
+        for (int i = 0; i < islands.Count; i++)
+            buildDockForIsland(islands[i]);
+
+        for (int i = 0; i < islands.Count; i++)
+        {
+            Island island = islands[i].GetComponent<Island>();
+            GameObject eDock = island.ExportDock;
+            GameObject iDock = island.ImportDock;
+            if (eDock != null)
+            {
+                docks.Add(eDock);
+                eDock.GetComponent<DependencyDock>().constructConnectionArrows();
+            }
+            if (iDock != null)
+            {
+                docks.Add(iDock);
+                iDock.GetComponent<DependencyDock>().constructConnectionArrows();
+            }
+        }
+
+        Debug.Log("Finished with Dock-GameObject construction!");
+
+        foreach (Island island in islands)
+        {
+            island.gameObject.AddComponent<Interactable>();
+            MeshFilter[] islandMeshFilters = island.gameObject.GetComponentsInChildren<MeshFilter>();
+            CombineInstance[] combineInstance = new CombineInstance[islandMeshFilters.Length];
+
+            for (int i = 0; i < islandMeshFilters.Length; i++)
+            {
+                if (islandMeshFilters[i].gameObject.name.Contains("Import"))
+                    continue;
+
+                if (islandMeshFilters[i].gameObject.name.Contains("Export"))
+                    continue;
+
+                combineInstance[i].mesh = islandMeshFilters[i].sharedMesh;
+                combineInstance[i].transform = islandMeshFilters[i].transform.localToWorldMatrix;
+                
+
+                combineInstance[i].transform *= Matrix4x4.Scale(Vector3.one*1.0001f);
+            }
+
+            GameObject highlight = new GameObject(island.name + "_Highlight");
+            highlight.tag = "Highlight";
+            highlight.transform.parent = island.gameObject.transform;
+            highlight.transform.localPosition += new Vector3(0, 0.001f, 0);
+            MeshFilter meshFilter = highlight.AddComponent<MeshFilter>();
+            meshFilter.mesh.CombineMeshes(combineInstance);
+
+            MeshRenderer meshRenderer = highlight.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = RuntimeCache.Instance.WireFrame;
+            meshRenderer.enabled = false;
+        }
+
+        ConstructionComplete = true;
+    }
+
+    private void buildDockForIsland(Island island)
     {
         CartographicIsland islandStructure = island.CartographicIsland;
 
@@ -32,8 +110,8 @@ public class IslandDockBuilder
         if (vert != null)
         {
 
-            float importSize = 0.04f * 20f; // Don't hardcode.
-            float exportSize = 0.04f * 20f; // Don't hardcode.
+            float importSize = 0.04f * 25f; // Don't hardcode.
+            float exportSize = 0.04f * 25f; // Don't hardcode.
 
             //Outgoing edges -Bundle depends on...
             IEnumerable<GraphEdge> outEdges;
@@ -55,11 +133,11 @@ public class IslandDockBuilder
             }
 
             #region determine optimal Position for ImportDock
-            List<GameObject> doNotCollideList = new List<GameObject>();
-            doNotCollideList.Add(island.Coast);
-            bool foundLocation = findSuitablePosition2D(importD, doNotCollideList, island.gameObject, 500);
-            if (!foundLocation)
-                Debug.Log("Could not find suitable location for " + importD.name);
+            //List<GameObject> doNotCollideList = new List<GameObject>();
+            //doNotCollideList.Add(island.Coast);
+            //bool foundLocation = findSuitablePosition2D(importD, doNotCollideList, island.gameObject, 500);
+            //if (!foundLocation)
+            //    Debug.Log("Could not find suitable location for " + importD.name);
             #endregion
 
 
@@ -84,18 +162,46 @@ public class IslandDockBuilder
             }
 
             #region determine optimal Position for ExportDock
-            doNotCollideList.Clear();
-            doNotCollideList.Add(island.Coast);
-            foundLocation = findSuitablePosition2D(exportD, doNotCollideList, importD, 500);
-            if (!foundLocation)
-                Debug.Log("Could not find suitable location for " + exportD.name);
+            //doNotCollideList.Clear();
+            //doNotCollideList.Add(island.Coast);
+            //foundLocation = findSuitablePosition2D(exportD, doNotCollideList, importD, 2000);
+            //if (!foundLocation)
+            //    Debug.Log("Could not find suitable location for " + exportD.name);
             #endregion
+
+            findSuitablePosition2D(island, importD, exportD);
 
             #region extend Island collider based on new Docksizes
             //island.GetComponent<CapsuleCollider>().radius += Mathf.Max(importSize, exportSize) * Mathf.Sqrt(2f);
             #endregion
 
         }
+    }
+
+    private void findSuitablePosition2D(Island island, GameObject importDock, GameObject exportDock)
+    {
+        CapsuleCollider islandCollider = island.gameObject.GetComponent<CapsuleCollider>();
+        BoxCollider importDockCollider = importDock.gameObject.GetComponent<BoxCollider>();
+        BoxCollider exportDockCollider = exportDock.gameObject.GetComponent<BoxCollider>();
+
+        float distance = islandCollider.radius + importDockCollider.bounds.extents.magnitude;
+
+        Vector3 importDockDirection = new Vector3(Random.value, 0, Random.value).normalized;
+        Vector3 importDockPosition = importDockDirection * distance * Random.Range(1.0f, 1.2f);
+        importDockPosition.y = -2.0f;
+
+        importDock.transform.localPosition = importDockPosition;
+
+        Vector3 exportDockPosition = importDockPosition * Random.Range(0.95f, 1.25f);
+        exportDockPosition = Quaternion.AngleAxis(Random.Range(25, 35), Vector3.up) * exportDockPosition;
+        exportDockPosition.y = -2.0f;
+        importDock.transform.localPosition = importDockPosition;
+
+        //Vector3 exportDockDirection = new Vector3(Random.value, 0, Random.value).normalized;
+        //Vector3 exportDockPosition = importDockPosition + (exportDockDirection * importDockCollider.bounds.extents.magnitude * Random.Range(1.15f, 1.25f));
+        //exportDockPosition.y = -2.0f;
+
+        exportDock.transform.localPosition = exportDockPosition;
     }
 
     private bool findSuitablePosition2D(GameObject obj, List<GameObject> doNotCollideWith, GameObject placeNearThis, int iterations)
@@ -113,25 +219,32 @@ public class IslandDockBuilder
             MeshCollider mc = go.AddComponent<MeshCollider>();
             mc.sharedMesh = go.GetComponent<MeshFilter>().sharedMesh;
             mc.convex = true;
-            //go.layer = LayerMask.NameToLayer("CalculationOnly");
+            go.layer = LayerMask.NameToLayer("CalculationOnly");
         }
         #endregion
 
-        Vector3 originalPosition = obj.transform.position;
+        Vector3 originalPosition = obj.transform.localPosition;
         Collider objCollider = obj.GetComponent<Collider>();
         Collider nearThisCollider = placeNearThis.GetComponent<Collider>();
-        float placeDistance = objCollider.bounds.extents.magnitude + nearThisCollider.bounds.extents.magnitude;
+
+        float placeDistance = (objCollider.bounds.extents.magnitude + nearThisCollider.bounds.extents.magnitude);
         for (int i = 0; i < iterations; i++)
         {
-            Vector3 dockDirection = new Vector3(UnityEngine.Random.value, 0, UnityEngine.Random.value);
+            Vector3 dockDirection = new Vector3(Random.value, 0, Random.value);
             dockDirection.Normalize();
-            dockDirection *= placeDistance;
-            Vector3 newPossiblePosition = placeNearThis.transform.position + dockDirection;
+
+            if(obj.GetComponent<DependencyDock>().DockType == DockType.Import)
+                dockDirection = dockDirection * placeDistance;
+            else
+                dockDirection = dockDirection * placeDistance;
+
+            Vector3 newPossiblePosition = dockDirection;
+            newPossiblePosition.y = -2.0f;
 
             bool intersects = Physics.CheckSphere(newPossiblePosition, placeDistance, calculationLayermask);
             if (!intersects)
             {
-                obj.transform.position = newPossiblePosition;
+                obj.transform.localPosition = newPossiblePosition;
                 result = true;
                 break;
             }
