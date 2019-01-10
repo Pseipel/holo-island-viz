@@ -11,11 +11,14 @@ namespace HoloIslandVis.Input
         public List<Entity> entities;
         public string intention;
         public double intentionConfidence;
+        public GestureType ActiveGesture { get; set; }
+
         public SpeechInputEventArgs(RasaResponse response)
         {   
             this.entities = response.Entities;
             this.intention = response.IntentName;
             this.intentionConfidence = response.IntentConfidence;
+            this.ActiveGesture = GestureType.None;
         }
     }
 }

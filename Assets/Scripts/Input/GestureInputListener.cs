@@ -13,6 +13,7 @@ namespace HoloIslandVis.Input
 {
     public enum GestureType : byte
     {
+        None = 0,
         OneHandTap = 1,
         TwoHandTap = 2,
         OneHandDoubleTap = 4,
@@ -20,7 +21,8 @@ namespace HoloIslandVis.Input
         OneHandManipStart = 16,
         TwoHandManipStart = 32,
         ManipulationUpdate = 64,
-        ManipulationEnd = 128
+        ManipulationEnd = 128,
+        Invariant = 255
     }
 
     public class GestureInputListener : SingletonComponent<GestureInputListener>, 
@@ -158,12 +160,6 @@ namespace HoloIslandVis.Input
             ManipulationEnd = delegate { };
         }
 
-        public void InvokeGestureInputEvent(GestureInputEventArgs eventArgs)
-        {
-            Action<GestureInputEventArgs> action = _gestureEventTable[eventArgs.GestureType];
-            UnityMainThreadDispatcher.Instance.Enqueue(action, eventArgs);
-        }
-
         private async void processInput(InputEventData eventData)
         {
             await Task.Delay(_gestureSources[eventData.SourceId].InputTimeout);
@@ -181,7 +177,8 @@ namespace HoloIslandVis.Input
             if(_gestureTypeTable.TryGetValue(inputData, out gestureType))
             {
                 GestureInputEventArgs eventArgs = new GestureInputEventArgs(gestureType, gestureSources);
-                InvokeGestureInputEvent(eventArgs);
+                Action<GestureInputEventArgs> action = _gestureEventTable[eventArgs.GestureType];
+                InputHandler.Instance.InvokeGestureInputEvent(action, eventArgs);
             }
         }
     }

@@ -16,6 +16,12 @@ using UnityEngine.Events;
 
 namespace HoloIslandVis.Input
 {
+    public enum SpeechType : byte
+    {
+        None = 0,
+        Speak = 1
+    }
+
     public class SpeechInputListener : SingletonComponent<SpeechInputListener>
     {
         public delegate void CustomSpeechInputHandler(SpeechInputEventArgs eventArgs);
@@ -97,7 +103,8 @@ namespace HoloIslandVis.Input
                     RasaResponse response = new RasaResponse(www.text);
                     Debug.Log("www.text: " + www.text);
                     SpeechInputEventArgs eventArgs = new SpeechInputEventArgs(response);
-                    UnityMainThreadDispatcher.Instance.Enqueue(intentName => SpeechResponse(intentName), eventArgs);
+                    Action<SpeechInputEventArgs> action = new Action<SpeechInputEventArgs>(intentName => SpeechResponse(intentName));
+                    InputHandler.Instance.InvokeSpeechInputEvent(action, eventArgs);
                 }
             }
         }
