@@ -27,11 +27,10 @@ namespace HoloIslandVis.Component.UI
             ScanInstructionText = GameObject.Find("ScanInstructionText");
             ScanProgressBar = GameObject.Find("ScanProgressBar");
             Panel = GameObject.Find("Panel");
-      
 
             ScanInstructionText.SetActive(false);
             ScanProgressBar.SetActive(false);
-            //Panel.SetActive(false);
+            Panel.SetActive(false);
 
         }
 

@@ -96,23 +96,8 @@ namespace HoloIslandVis.Automaton
 
         public override void OnSpeechResponse(SpeechInputEventArgs eventArgs)
         {
-            KeywordType kt; 
-            switch(eventArgs.keyWord)
-            {
-                //TODO: refactoring 
-                case "find":
-                    kt = KeywordType.Find;
-                    break;
-                case "utter":
-                    kt = KeywordType.Utter;
-                    break;
-                default:
-                    kt = KeywordType.Invariant;
-                    break;
-            }
-
             if (CurrentState != null)
-                CurrentState.ProcessCommand(eventArgs, new Command(GestureType.Invariant, kt, InteractableType.Invariant));
+                CurrentState.ProcessCommand(eventArgs, new Command(GestureType.Invariant, eventArgs.kt, InteractableType.Invariant));
         }
 
         private void ProcessGestureInputEvent(GestureInputEventArgs eventArgs)

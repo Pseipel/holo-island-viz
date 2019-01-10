@@ -14,6 +14,7 @@ namespace HoloIslandVis.Interaction.Tasking
     {
         public override void Perform(InputEventArgs eventArgs, Command command)
         {
+            Debug.Log("Deselecting island");
             foreach (Island island in RuntimeCache.Instance.Islands)
             {
                 Transform[] transforms = island.transform.GetComponentsInChildren<Transform>(true);

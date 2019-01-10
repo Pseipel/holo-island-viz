@@ -35,7 +35,7 @@ namespace HoloIslandVis.Automaton
         Island = 1,
         ExportDock = 2,
         ImportDock = 4,
-        Panel = 8,
+        PanelListEntry = 8,
         Invariant = 255
     }
 

@@ -250,6 +250,27 @@ namespace HoloIslandVis.Utility
 
             return null;
         }
+
+        public GameObject FindGameObjectByName(string name)
+        {
+            foreach (Island island in Islands)
+            {
+                if (island.name == name)
+                    return island.gameObject;
+                foreach(Region region in island.Regions)
+                {
+                    if (region.Package.Name == name)
+                        return region.gameObject;
+                    foreach (Building building in region.Buildings)
+                    {
+                        if (building.CompilationUnit.Name == name)
+                            return building.gameObject;
+                    }
+                }
+            }
+            return null;
+        }
+
     }
 
 }

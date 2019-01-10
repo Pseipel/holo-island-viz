@@ -55,6 +55,7 @@ namespace HoloIslandVis
         public void initScene()
         {
             SpatialScan.Instance.RequestBeginScanning();
+            UserInterface.Instance.Panel.SetActive(false);
 
             UserInterface.Instance.ScanInstructionText.SetActive(true);
             UserInterface.Instance.ScanProgressBar.SetActive(true);
@@ -164,13 +165,13 @@ namespace HoloIslandVis
             Command commandAllDockSelect = new Command(GestureType.OneHandDoubleTap, KeywordType.Invariant, InteractableType.Invariant);
 
             Command commandSelect = new Command(GestureType.OneHandTap, KeywordType.Invariant, InteractableType.Island);
-            Command commandDeselect = new Command(GestureType.OneHandTap, KeywordType.Invariant, InteractableType.None);
+            Command commandDeselect = new Command(GestureType.OneHandTap, KeywordType.Invariant, InteractableType.Invariant);
             Command commandSurfaceDrag = new Command(GestureType.OneHandManipStart, KeywordType.Invariant, InteractableType.Invariant);
             Command commandSurfaceZoom = new Command(GestureType.TwoHandManipStart, KeywordType.Invariant, InteractableType.Invariant);
 
             Command commandVerbalReply = new Command(GestureType.Invariant, KeywordType.Utter, InteractableType.Invariant);
             Command commandDisplayOnPanel = new Command(GestureType.Invariant, KeywordType.Find, InteractableType.Invariant);
-            Command commandNavigateToTarget = new Command(GestureType.OneHandTap, KeywordType.Invariant, InteractableType.Panel);
+            Command commandNavigateToTarget = new Command(GestureType.OneHandTap, KeywordType.Invariant, InteractableType.PanelListEntry);
 
             ShowArrowTask showArrowTask = new ShowArrowTask();
             ShowAllArrowsTask showAllArrowsTask = new ShowAllArrowsTask();
@@ -194,7 +195,6 @@ namespace HoloIslandVis
             testState.AddInteractionTask(commandVerbalReply, verbalReplyTask);
             testState.AddInteractionTask(commandDisplayOnPanel, displayOnPanelTask);
             testState.AddInteractionTask(commandNavigateToTarget, findEntitiesTask);
-
 
             stateMachine.AddState(testState);
             stateMachine.Init(testState);

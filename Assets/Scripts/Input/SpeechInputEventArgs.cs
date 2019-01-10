@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using HoloIslandVis.Automaton;
 using HoloToolkit.Unity.InputModule;
 using UnityEngine;
 using static HoloIslandVis.Input.RasaResponse;
@@ -10,18 +11,14 @@ namespace HoloIslandVis.Input
     {
  
         public string rasaResponse;
-        public string keyWord;
+        public string intentName;
+        public KeywordType kt;
 
-
-        //public List<Entity> entities;
-        //public double intentionConfidence;
-
-        public SpeechInputEventArgs(string rasaResponse, string keyWord)
+        public SpeechInputEventArgs(string rasaResponse, string intentName, KeywordType kt)
         {   
             this.rasaResponse = rasaResponse;
-            this.keyWord = keyWord;
-            //this.entities = response.Entities;
-            //this.intentionConfidence = response.IntentConfidence;
+            this.intentName = intentName;
+            this.kt = kt;
         }
     }
 }

@@ -11,13 +11,13 @@ namespace HoloIslandVis.Utility
     {
         public Neo4JResponse(JSONObject dbEntry)
         {
-            this.Description = dbEntry.GetField("columns").ToString();
             this.Description = dbEntry.GetField("row").ToString();
+            this.TargetName = dbEntry.GetField("row").GetField("row")[0].GetField("name").ToString();
         }
 
-        public string ID
+        public string TargetName
         {
-            get; private set;
+            get; set;
         }
         public string Description
         {
